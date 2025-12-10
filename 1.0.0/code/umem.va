@@ -1,0 +1,380 @@
+// Unified Memristor Model (UMEM 1.0.0)
+// Copyright (c) 2025 Chien-Ting Tung
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+// Numerical constants
+`define CONSTCtoK 273.15
+`define REFTEMP 300.15
+`define EXPL_THRESHOLD 80.0
+`define MAX_EXPL 5.540622384e34
+`define MIN_EXPL 1.804851387e-35
+`define EXPL_THRESHOLD2 10.0
+`define MAX_EXPL2 22026.465794806718
+`define N_MINLOG 1.0e-38
+`define LN_N_MINLOG -87.498233534
+
+// Physical constants
+`define q 1.60219e-19
+`define EPS0 8.8542e-12
+`define KboQ 8.617087e-5
+
+// Clamped exponential
+`define lexp(x) ((x > `EXPL_THRESHOLD) ? `MAX_EXPL * (1.0 + x - `EXPL_THRESHOLD) : (x < -`EXPL_THRESHOLD) ? `MIN_EXPL : exp(x))
+
+// Clamped exponential 2
+`define l2exp(x) ((x > `EXPL_THRESHOLD2) ? `MAX_EXPL2 * (1.0 + x - `EXPL_THRESHOLD2) : (x < -`EXPL_THRESHOLD) ? `MIN_EXPL : exp(x))
+
+// Clamped logarithm
+`define lln(x) ((x > `N_MINLOG) ? ln(x) : `LN_N_MINLOG)
+
+// Smoothstep
+`define smoothstep(x, deltax) (0.5 * ((x) / sqrt((x) * (x) + (deltax) * (deltax)) + 1))
+
+//Smoothmax
+`define smoothmax(x, maxx, deltax) (0.5 * ((x) + (maxx) - sqrt(((x) - (maxx)) * ((x) - (maxx)) + (deltax) * (deltax))))
+
+//Smoothmin
+`define smoothmin(x, minx, deltax) (0.5 * ((x) + (minx) + sqrt(((x) - (minx)) * ((x) - (minx)) + (deltax) * (deltax))))
+
+//  Macros for the model/instance parameters
+//  OPP: operating point parameter, includes units and description for printing
+//  MPRxx: model parameter real
+//  MPIxx: model parameter integer
+//  IPRxx: instance parameter real
+//  IPIxx: instance parameter integer
+//  BPRxx: both model and instance parameter real
+//  BPIxx: both model and instance parameter integer
+//     ||
+//     cc: closed lower bound, closed upper bound
+//     oo: open lower bound, open upper bound
+//     co: closed lower bound, open upper bound
+//     oc: open lower bound, closed upper bound
+//     cz: closed lower bound = 0, open upper bound = inf
+//     oz: open lower bound = 0, open upper bound = inf
+//     nb: no bounds
+//     ex: no bounds with exclude
+//     sw: switch (integer only, values 0 = false and 1 = true)
+//     ty: switch (integer only, values -1 = p-type and +1 = n-type)
+`define OPP(nam, uni, des) (* units = uni, desc = des *) real nam;
+`define OPM(nam,uni,des)   (* units=uni, desc=des, multiplicity="multiply" *)  real    nam;
+`define OPD(nam,uni,des)   (* units=uni, desc=des, multiplicity="divide"   *)  real    nam;
+`define BPRco(nam, def, uni, lwr, upr, des) (* units = uni, type = "instance", desc = des *) parameter real nam = def from[lwr : upr);
+`define BPRoc(nam, def, uni, lwr, upr, des) (* units = uni, type = "instance", desc = des *) parameter real nam = def from(lwr : upr];
+`define BPRoz(nam, def, uni, des) (* units = uni, type = "instance", desc = des *) parameter real nam = def from(0.0 : inf);
+`define BPRcz(nam, def, uni, des) (* units = uni, type = "instance", desc = des *) parameter real nam = def from[0.0 : inf);
+`define BPRnb(nam, def, uni, des) (* units = uni, type = "instance", desc = des *) parameter real nam = def;
+`define BPRoo(nam, def, uni, lwr, upr, des) (* units = uni, type = "instance", desc = des *) parameter real nam = def from(lwr : upr);
+`define BPIcc(nam, def, uni, lwr, upr, des) (* units = uni, type = "instance", desc = des *) parameter integer nam = def from[lwr : upr];
+`define IPIco(nam, def, uni, lwr, upr, des) (* units = uni, type = "instance", desc = des *) parameter integer nam = def from[lwr : upr);
+`define MPRnb(nam, def, uni, des) (* units = uni, desc = des *) parameter real nam = def;
+`define MPRex(nam, def, uni, exc, des) (* units = uni, desc = des *) parameter real nam = def exclude exc;
+`define MPRcc(nam, def, uni, lwr, upr, des) (* units = uni, desc = des *) parameter real nam = def from[lwr : upr];
+`define MPRoo(nam, def, uni, lwr, upr, des) (* units = uni, desc = des *) parameter real nam = def from(lwr : upr);
+`define MPRco(nam, def, uni, lwr, upr, des) (* units = uni, desc = des *) parameter real nam = def from[lwr : upr);
+`define MPRcz(nam, def, uni, des) (* units = uni, desc = des *) parameter real nam = def from[0.0 : inf);
+`define MPRoz(nam, def, uni, des) (* units = uni, desc = des *) parameter real nam = def from(0.0 : inf);
+`define MPIcc(nam, def, uni, lwr, upr, des) (* units = uni, desc = des *) parameter integer nam = def from[lwr : upr];
+`define MPIty(nam, def, uni, des) (* units = uni, desc = des *) parameter integer nam = def from[ -1: 1] exclude 0;
+
+module umem_va(n1, n2, s);
+    inout n1, n2, s;
+    electrical n1, n2;
+    electrical s, s1, s2;
+    thermal t;
+
+    // Both model and instance parameters
+    `BPRoz(tm, 5e-9, "m", "Thickness/length of the device")
+    `BPRoz(area, 1e-14, "m^2", "Area")
+    `BPRoz(tf, 5e-9, "m", "Free layer thickness of the device (MRAM only)")
+    `BPRoz(pr, 0.2, "C/m^2", "Remanent polarization at nominal temperature (FE only)")
+    `BPRcz(epar, 0, "", "Parasitic dieletric constance")
+    `BPRnb(dtemp, 0.0, "degC", "Variability in device temperature")
+
+    // Model parameters
+    `MPIcc(devmod, 0, "", 0, 2, "RRAM: 0; FE: 1; MRAM: 2")
+    `MPIcc(pdfmod, 0, "", 0, 1, "Gaussian: 0; Log-normal: 1")
+    `MPIcc(shmod, 0, "", 0, 1, "Slef-heating Off: 0; On: 1")
+    `MPRnb(voff, 0, "V", "Offset voltage")
+    `MPRco(tnom, 27.0, "degC", -`P_CELSIUS0, inf, "Nominal temperature")
+    `MPRoz(tfnom, 5e-9, "m", "Nominal free layer thickness of the device (MRAM only)")
+    `MPRoz(areanom, 1e-14, "m^2", "Nominal Area")
+
+    // Switching parameters
+    `MPRoz(tau0, 1e-10, "s", "Switching time constant")
+    `MPRoz(ea0, 1.0, "eV (RRAM) or MV/cm (FE)", "Nominal activation energy (RRAM) or field (FE)")
+    `MPRoz(am, 1, "", "Field amplification factor (RRAM and FE only)")
+    `MPRnb(a0, 0, "", "Fitting parameter for switching voltage dependence (RRAM and FE only)")
+    `MPRcz(b0, 0, "", "Fitting parameter for switching slope (RRAM and FE only)")
+    `MPRcz(c0, 1, "", "FE temperature switching coefficient")
+    `MPRcz(ttau0, 0, "", "FE temperature dependence of tau0")
+    `MPRcz(tpr, 0, "", "FE temperature coefficient of pr")
+    `MPRoz(eth, 5e7, "V/m", "Threshold field for minor loop detection (FE only)")
+    `MPRoz(defd, 1e2, "V/m", "Smoothing factor for minor loop detection (FE only)")
+    `MPRcz(md1, 0, "", "Distribution scaling factor for minor loops (FE only)")
+    `MPRcz(md2, 0, "", "Distribution scaling factor for minor loops (FE only)")
+    `MPRcz(dedc, 1e4, "V/m", "Smoothing factor for DC curve (RRAM and FE only)")
+    `MPRcz(efb, 1e7, "V", "Feedback field from polarization (FE only)")
+    `MPRoz(ic0, 1e-5, "A", "Critical current (MRAM only)")
+
+    // Reverse switching parameters
+    `MPRoz(ea0_r, ea0, "eV (RRAM) or MV/cm (FE)", "Nominal activation field (for RRAM and FE only)")
+    `MPRoz(am_r, am, "", "Field amplification factor (for RRAM and FE only)")
+    `MPRnb(a0_r, a0, "", "Fitting parameter for switching voltage dependence (for RRAM and FE only)")
+    `MPRcz(b0_r, b0, "", "Fitting parameter for switching slope (for RRAM and FE only)")
+    `MPRcz(md1_r, md1, "", "Distribution scaling factor for minor loops (FE only)")
+    `MPRcz(md2_r, md2, "", "Distribution scaling factor for minor loops (FE only)")
+    `MPRoz(ic0_r, ic0, "A", "Critical current (MRAM only)")
+
+    // Resistance parameters
+    `MPRoz(rhot, 1e-5, "ohm*m", "Resistivity of tunneling resistance")
+    `MPRoz(x0, 5e-10, "m", "Thickness dependence factor of resistance")
+    `MPRnb(x1, 0, "", "Polarization dependent barier factor (FE only)")
+    `MPRoz(v0, 0.5, "V", "Voltage dependence factor of tunnel resistance")
+    `MPRoz(vs0, 0.5, "V", "Voltage dependence factor of series resistance")
+    `MPRoz(vr0, 1, "V", "Voltage dependence factor of tmr")
+    `MPRcz(tmr0, 1, "", "Nominal tunnel magnetoresistance")
+    `MPRcz(rs, 0.1, "ohm", "Series resistance")
+
+    // Reverse Resistance parameters
+    `MPRoz(rhot_r, rhot, "ohm*m", "Resistivity of tunneling resistance")
+    `MPRoz(x0_r, x0, "m", "Thickness dependence factor of resistance")
+    `MPRoz(v0_r, v0, "V", "Voltage dependence factor of tunnel resistance")
+    `MPRcz(rs_r, rs, "ohm", "Series resistance")
+
+    // Self-heating
+    `MPRcz(rth, 0, "K/W", "Thermal resistance")
+    `MPRcz(cth, 0, "J/K", "Thermal capacitance")
+
+    real va, va1, im, rm, efield, devtemp, tnomK, vt;
+    real ea_f, ea_r, F_f, F_r, F;
+    real t0, t1, t2, ef_f, ef_r, pr_t;
+    real mf, mr;
+    real ip, in, icp, icn, vf, vfnom;
+    real x, xt, tmr, ratio;
+    real cp, Q;
+    real SF, x0final, v0final, rhotfinal, rsfinal, veff;
+
+    analog begin
+
+        va = V(n1, n2);
+        va1 = va + voff;
+        efield = 0.0;
+        if (shmod == 0) begin
+            devtemp = $temperature + dtemp;
+        end else begin
+            devtemp = $temperature + Temp(t) + dtemp;
+        end
+        tnomK = tnom + `CONSTCtoK;
+        vt = `KboQ * devtemp;
+        pr_t = 0.0;
+        ea_f = 0.0;
+        ea_r = 0.0;
+        ef_f = 0.0;
+        ef_r = 0.0;
+        t0 = 0.0;
+        t1 = 0.0;
+        t2 = 0.0;
+        mf = 0.0;
+        mr = 0.0;
+        ip = 0.0;
+        in = 0.0;
+        icp = 1.0;
+        icn = 1.0;
+        vf = 1.0;
+        vfnom = 1.0;
+        x = tm;
+        tmr = 0;
+        ratio = 1.0;
+        cp = `EPS0 * epar / tm * area;
+
+        //Switching module
+
+        if (devmod == 0) begin
+
+            // RRAM
+            x = V(s) * 1e-9;
+            x = `smoothmin(x, 0, 5e-12);
+            x = `smoothmax(x, tm, 5e-12);
+            efield = va1 / tm;
+            t0 = x / tm;
+            t1 = 1 - t0;
+
+            if (a0 > 0) begin
+                ea_f = ea0 * (a0 * pow(t1, b0) + 1);
+            end else begin
+                ea_f = ea0 * (-a0 * pow(t0, b0) + 1) / (-a0 + 1);
+            end
+
+            if (a0_r > 0) begin
+                ea_r = ea0_r * (a0_r * pow(t1, b0_r) + 1);
+            end else begin
+                ea_r = ea0_r * (-a0_r * pow(t0, b0_r) + 1) / (-a0_r + 1);
+            end
+
+            SF =  `smoothstep(efield, dedc);
+            F_f = (- 1e-9 * V(s)) / tau0 * `l2exp((1e-9 * am * efield - ea_f) / vt) * SF;
+            F_r =  (tm - 1e-9 * V(s)) / tau0 * `l2exp(-(1e-9 * am_r * efield + ea_r) / vt) * (1 - SF);
+            F = 1e9 * (F_f + F_r);
+
+            V(s1) <+ 0;
+            V(s2) <+ 0;
+
+        end else if (devmod == 1) begin
+
+            // Ferroelectric
+            pr_t = pr * exp(-tpr * (devtemp - tnomK));
+            efield = va1 / tm;
+            ef_f = `smoothmin(efield, 0, 1e6);
+            ef_r = `smoothmax(efield, 0, 1e6);
+
+            t0 = V(s) / pr_t;
+            t0 = `smoothmin(t0, -0.999, 1e-3);
+            t0 = `smoothmax(t0, 0.999, 1e-3);
+
+
+            I(s1) <+ (V(s) - V(s1)) * `smoothstep(-efield - eth, defd);
+            I(s1) <+ -1e-12 * ddt(V(s1));
+
+            I(s2) <+ (V(s) - V(s2)) * `smoothstep(efield - eth, defd);
+            I(s2) <+ -1e-12 * ddt(V(s2));
+
+            t1 = V(s1) / pr_t;
+            t2 = 1 + t1;
+            t2 = `smoothmin(t2, 0, 1e-3);
+            mf = 1 + md1 * (1 - exp(-md2 * t2));
+
+            t1 = V(s2) / pr_t;
+            t2 = 1 - t1;
+            t2 = `smoothmin(t2, 0, 1e-3);
+            mr = 1 + md1_r * (1 - exp(-md2_r * t2));
+
+            if (pdfmod == 0) begin
+                ea_f = 1e8 * ea0 / mf *  (1 + 0.5 * a0 * mf * `lln((1+t0)/(1-t0)));
+                ea_r = 1e8 * ea0_r / mr *  (1 + 0.5 * a0_r * mr * `lln((1-t0)/(1+t0)));
+                ea_f = `smoothmin(ea_f, 0, 1e6);
+                ea_r = `smoothmin(ea_r, 0, 1e6);
+            end else begin
+                ea_f = 1e8 * ea0 / mf * `lexp(0.5 * a0 * mf * `lln((1+t0)/(1-t0)));
+                ea_r = 1e8 * ea0_r / mr * `lexp(0.5 * a0_r * mr * `lln((1-t0)/(1+t0)));
+            end
+
+            SF = `smoothstep(efield + efb * t0, dedc);
+
+            if (b0 < 1) begin
+                F_f = (pr_t - V(s)) / tau0 / pow(tnomK / devtemp, ttau0) * `lexp(-pow(tnomK / devtemp, c0) * pow(ea_f / ef_f, am)) ;
+            end else begin
+                F_f = (pr_t - V(s)) / tau0 / pow(tnomK / devtemp, ttau0) * `lexp(-pow(tnomK / devtemp, c0) * pow(ea_f / ef_f, am)) * b0 * pow(-`lln(0.5 - 0.5 * t0), 1-1/b0) ;
+            end
+            if (b0_r < 1) begin
+                F_r = (-pr_t - V(s)) / tau0 / pow(tnomK / devtemp, ttau0) * `lexp(-pow(tnomK / devtemp, c0) * pow(-ea_r / ef_r, am_r)) ;
+            end else begin
+                F_r = (-pr_t - V(s)) / tau0 / pow(tnomK / devtemp, ttau0) * `lexp(-pow(tnomK / devtemp, c0) * pow(-ea_r / ef_r, am_r)) * b0_r * pow(-`lln(0.5 + 0.5 * t0), 1-1/b0_r) ;
+            end
+
+            F_f = F_f * SF;
+            F_r = F_r * (1 - SF);
+            F = F_f + F_r ;
+
+        end else begin
+
+            // MRAM
+            im = I(n1, n2);
+            ip = `smoothmin(im, 0, 1e-10) - 5e-11;
+            in = im - ip;
+
+            vf = tf * area;
+            vfnom = tfnom * areanom;
+
+            icp = ic0 * vf / vfnom;
+            icn = ic0_r * vf / vfnom;
+
+            t0 = V(s);
+            t0 = `smoothmax(t0, 1, 1e-3);
+            t0 = `smoothmin(t0, -1, 1e-3);
+
+            t1 = V(s);
+            t1 = `smoothmax(t1, 0.999, 1e-3);
+            t2 = V(s);
+            t2 = `smoothmin(t1, -0.999, 1e-3);
+
+            F_f =  (-1 - V(s)) / tau0 * (-1 + t1) * (0.5 * t0 - ip / icp) ;
+            F_r =   (1 - V(s)) / tau0 * (1 + t2) * (0.5 * t0 - in / icn) ;
+            F = F_f + F_r;
+
+            V(s1) <+ 0;
+            V(s2) <+ 0;
+
+        end
+
+        I(s) <+ -ddt(V(s));
+        I(s) <+ F;
+
+        // Resistance module
+
+        SF = `smoothstep(va, 1e-2);
+        x0final = x0 * SF + x0_r * (1 - SF);
+        v0final = v0 * SF + v0_r * (1 - SF);
+        rhotfinal = rhot * SF + rhot_r * (1 - SF);
+        rsfinal = rs * SF + rs_r * (1 - SF);
+
+        if (devmod == 0) begin
+            xt = x0final;
+        end else if (devmod == 1) begin
+            xt = x0final * (1 + x1 * t0);
+        end else begin
+            xt = x0final;
+            tmr = tmr0 / (1 + (va * va / vr0 / vr0));
+            ratio = 2 * (1 + tmr) / (2 + (1 + t0) * tmr);
+        end
+
+        veff = va / v0final;
+
+        rm = ratio * rhotfinal / area * x * `lexp(x / xt) / (1 + veff * veff) + rsfinal / (1 + (va * va / vs0 / vs0)) * areanom / area + 1e-3;
+        im = va / rm;
+
+        // Charge module
+
+        if (devmod == 0) begin
+            Q = cp * va1;
+        end else if (devmod == 1) begin
+            Q = cp * va1 + V(s) * area;
+        end else begin
+            Q = cp * va1;
+        end
+
+        // Self-heating
+
+        if (shmod == 0) begin
+            Temp(t) <+ 0;
+        end else begin
+            Pwr(t) <+ Temp(t);
+            Pwr(t) <+ ddt(Temp(t) * cth * rth);
+            Pwr(t) <+ -va * im * rth;
+        end
+
+        I(n1, n2) <+ im;
+        I(n1, n2) <+ ddt(Q);
+
+    end
+
+endmodule
