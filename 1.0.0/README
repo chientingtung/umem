@@ -1,0 +1,50 @@
+# UMEM Compact Model 1.0.0
+
+## Overview
+The Unified Memristor Model (UMEM) is a compact Verilog-A implementation that supports simulation of resistive (RRAM), ferroelectric (FERAM/FTJ), and magnetic (MRAM) memory devices under a unified framework. This release includes source code, simulation testbenches, and a technical manual.
+
+## Directory Structure
+UMEM_1.0.0/
+├── code/           # Verilog-A source files and osdi for UMEM  
+├── OUT/            # Output directory for simulation results  
+├── test_dc         # DC simulation testbench  
+├── test_tran       # Transient simulation testbench  
+├── UMEM_technical_manual.pdf  # Model description and usage guide  
+
+## License
+All files in this release, including Verilog-A source code, testbenches, and documentation, are distributed under the MIT License:
+
+Unified Memristor Model (UMEM 1.0.0)  
+Copyright (c) 2025 Chien-Ting Tung
+
+Permission is hereby granted, free of charge, to any person obtaining a copy  
+of this software and associated documentation files (the "Software"), to deal  
+in the Software without restriction, including without limitation the rights  
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell  
+copies of the Software, and to permit persons to whom the Software is  
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in  
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR  
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,  
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE  
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER  
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN  
+THE SOFTWARE.
+
+The technical manual (UMEM_technical_manual.pdf) is licensed under  
+Creative Commons Attribution 4.0 International (CC BY 4.0).
+
+## Citation
+If you use this model in your research or publications, please cite:
+
+C.-T. Tung, "A Unified Memristor Compact Model for RRAM, FERAM/FTJ, and MRAM,"  
+IEEE Transactions on Electron Devices, doi: 10.1109/TED.2025.3633652
+
+## Contact
+For questions or feedback, please contact:  
+Dr. Chien-Ting Tung   
+Email: cttung.research@gmail.com
