@@ -9,7 +9,7 @@ It currently supports three device classes:
 
 UMEM is designed as a **well‑posed memristor model** that complies with the **Compact Model Coalition (CMC) Verilog‑A Model Pythonic Rule Enforcer (VAMPyRE)**.  
 It uses continuous formulation and well-defined state dynamic equation.
-This ensures numerical robustness, reproducibility, and the capability of doing both DC and transient simulation.\n
+This ensures numerical robustness, reproducibility, and the capability of doing both DC and transient simulation.  
 The model is benchmarked with ngspice-44.2_64.
 
 ## License
