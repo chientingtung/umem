@@ -9,7 +9,7 @@ wrdata ./OUT/test_tran.txt v(1) i(v2)
 
 .temp 25
 
-.model rram umem_va devmod=0 tm=1.7n area=25e-14 rth=5e5 cth=1e-15 x0=0.15n 
+.model rram umem_va devmod=0 shmod=0 tm=1.7n area=25e-14 rth=5e5 cth=1e-15 x0=0.15n 
 +tau0=1e-15 ea0=1.24 ea0_r=1.24 am=0.8 am_r=0.5 a0=-0.1 b0=3
 +rhot=3e-3 v0=0.45 rs=4000 areanom=25e-14
 
