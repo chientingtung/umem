@@ -1,4 +1,4 @@
-# Unified Memristor Model (UMEM)
+# UMEM: Unified Memristor Model
 
 ## Overview
 UMEM is a **unified compact model for memristive devices**.  
