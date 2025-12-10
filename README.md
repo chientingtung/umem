@@ -1,4 +1,4 @@
-# UMEM Compact Model 1.0.0
+# Unified Memristor Model (UMEM)
 
 ## Overview
 UMEM is a **unified compact model for memristive devices**.  
