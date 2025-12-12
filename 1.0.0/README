@@ -1,7 +1,7 @@
 # UMEM 1.0.0
 
 ## Overview
-The Unified Memristor Model (UMEM) is a compact Verilog-A implementation that supports simulation of resistive (RRAM), ferroelectric (FERAM/FTJ), and magnetic (MRAM) memory devices under a unified framework. This release includes source code, simulation testbenches, and a technical manual.
+The Unified Memristor Model (UMEM) is a physics-based Verilog-A compact model that supports simulation of resistive (RRAM), ferroelectric (FERAM/FTJ), and magnetic (MRAM) memory devices under a unified framework. This release includes source code, simulation testbenches, and a technical manual.
 
 ## Directory Structure
 UMEM_1.0.0/
