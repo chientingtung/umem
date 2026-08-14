@@ -1,1 +1,3 @@
 Change t2 = `smoothmin(t1, -0.999, 1e-3) to t2 = `smoothmin(t2, -0.999, 1e-3)
+Add minr
+Modify self-heating expression 
