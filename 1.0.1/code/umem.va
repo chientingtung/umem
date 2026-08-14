@@ -165,6 +165,9 @@ module umem_va(n1, n2, s);
     `MPRcz(rth, 0, "K/W", "Thermal resistance")
     `MPRcz(cth, 0, "J/K", "Thermal capacitance")
 
+    //Others
+    `MPRcz(minr, $simparam("minr", 1m), "Ohm", "Minimun resistance")
+
     real va, va1, im, rm, efield, devtemp, tnomK, vt;
     real ea_f, ea_r, F_f, F_r, F;
     real t0, t1, t2, ef_f, ef_r, pr_t;
@@ -349,7 +352,7 @@ module umem_va(n1, n2, s);
 
         veff = va / v0final;
 
-        rm = ratio * rhotfinal / area * x * `lexp(x / xt) / (1 + veff * veff) + rsfinal / (1 + (va * va / vs0 / vs0)) * areanom / area + 1e-3;
+        rm = ratio * rhotfinal / area * x * `lexp(x / xt) / (1 + veff * veff) + rsfinal / (1 + (va * va / vs0 / vs0)) * areanom / area + minr;
         im = va / rm;
 
         // Charge module
