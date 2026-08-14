@@ -367,9 +367,9 @@ module umem_va(n1, n2, s);
         if (shmod == 0) begin
             Temp(t) <+ 0;
         end else begin
-            Pwr(t) <+ Temp(t);
-            Pwr(t) <+ ddt(Temp(t) * cth * rth);
-            Pwr(t) <+ -va * im * rth;
+            Pwr(t) <+ Temp(t) / rth;
+            Pwr(t) <+ ddt(cth * Temp(t));
+            Pwr(t) <+ -va * im ;
         end
 
         I(n1, n2) <+ im;
